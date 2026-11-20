@@ -1,7 +1,7 @@
 {
   "name": "pulseops-engine",
   "version": "1.0.0",
-  "description": "",
+  "description": "Event-driven IT incident and SLA monitoring engine (Node.js + MongoDB)",
   "main": "server/server.js",
   "directories": {
     "doc": "docs"
@@ -11,7 +11,8 @@
     "start": "node --env-file=.env server/server.js",
     "dev": "node --watch --env-file=.env server/server.js",
     "generate-data": "node scripts/generate-sample-data.js",
-    "report": "node --env-file=.env analytics/slaReport.js"
+    "report": "node --env-file=.env analytics/slaReport.js",
+    "test:access": "bash db/03-test-access.sh"
   },
   "keywords": [],
   "author": "",

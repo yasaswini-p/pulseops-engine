@@ -1,6 +1,6 @@
 # PulseOps SLA Performance Report
 
-_Generated 20/11/2026, 6:30:44 PM by `pulse_analyst` (read-only role) using MongoDB aggregation pipelines._
+_Generated 20/11/2026, 6:44:25 PM by `pulse_analyst` (read-only role) using MongoDB aggregation pipelines._
 
 ## Key metrics
 
@@ -11,7 +11,7 @@ _Generated 20/11/2026, 6:30:44 PM by `pulse_analyst` (read-only role) using Mong
 | SLA breaches | 26 |
 | Escalations | 13 |
 | Average resolution time | 20.5 h |
-| Currently open | 2 |
+| Currently open | 3 |
 
 ## SLA compliance by team
 

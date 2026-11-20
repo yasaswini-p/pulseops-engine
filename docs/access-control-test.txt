@@ -1,4 +1,4 @@
-PulseOps access-control test — Fri Nov 20 17:12:05 IST 2026
+PulseOps access-control test — Fri Nov 20 18:43:45 IST 2026
 -------------------------------------------------------------------------
 1. No login reads incidents        (expect DENIED)      → DENIED (Unauthorized)
 2. Analyst reads teams             (expect ALLOWED)     → ALLOWED
