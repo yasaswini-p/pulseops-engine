@@ -16,6 +16,7 @@ const TRANSITIONS = {
 const incidents = () => getDb().collection("incidents");
 const slaPolicies = () => getDb().collection("sla_policies");
 const HIDE_ID = { projection: { _id: 0 } };
+const AFTER = { returnDocument: "after", projection: { _id: 0 } };
 
 function validateNew(data) {
   const errors = [];
@@ -50,13 +51,16 @@ async function create(data) {
     priority: data.priority,
     team: data.team,
     status: "OPEN",
-    escalated: false,
     slaMinutes: policy.resolveMinutes,
     slaDueAt: new Date(now.getTime() + (policy.resolveMinutes * 60000) / scale),
+    slaWarned: false,
+    slaBreached: false,
+    escalated: false,
     createdAt: now,
     updatedAt: now,
     resolvedAt: null,
-    history: [{ status: "OPEN", at: now }]
+    history: [{ status: "OPEN", at: now }],
+    source: "api"
   };
 
   await incidents().insertOne(doc);
@@ -96,8 +100,106 @@ async function updateStatus(incidentId, newStatus) {
   return incidents().findOneAndUpdate(
     { incidentId },
     { $set: set, $push: { history: { status: newStatus, at: now } } },
-    { returnDocument: "after", projection: { _id: 0 } }
+    AFTER
   );
 }
 
-module.exports = { validateNew, create, findAll, findById, findOpen, updateStatus, PRIORITIES, TEAMS, STATUSES };
+// ---------- SLA watcher queries ----------
+
+async function findBreachCandidates(now) {
+  return incidents().find(
+    { status: { $ne: "RESOLVED" }, slaDueAt: { $lt: now }, slaBreached: { $ne: true } },
+    HIDE_ID
+  ).toArray();
+}
+
+// Less than 25% of the SLA window remaining, not yet breached, not yet warned
+async function findWarningCandidates(now) {
+  return incidents().find({
+    status: { $ne: "RESOLVED" },
+    slaDueAt: { $gte: now },
+    slaWarned: { $ne: true },
+    $expr: {
+      $lt: [
+        { $subtract: ["$slaDueAt", now] },
+        { $multiply: [{ $subtract: ["$slaDueAt", "$createdAt"] }, 0.25] }
+      ]
+    }
+  }, HIDE_ID).toArray();
+}
+
+// The filter on slaBreached makes this atomic: only one caller can "claim" the breach
+async function markBreached(incidentId) {
+  return incidents().findOneAndUpdate(
+    { incidentId, slaBreached: { $ne: true } },
+    { $set: { slaBreached: true, breachedAt: new Date() } },
+    AFTER
+  );
+}
+
+async function markWarned(incidentId) {
+  return incidents().findOneAndUpdate(
+    { incidentId, slaWarned: { $ne: true } },
+    { $set: { slaWarned: true } },
+    AFTER
+  );
+}
+
+async function markEscalated(incidentId, lead) {
+  return incidents().findOneAndUpdate(
+    { incidentId },
+    { $set: { escalated: true, escalatedTo: lead, escalatedAt: new Date() } },
+    AFTER
+  );
+}
+
+// ---------- Historical import ----------
+
+async function insertHistorical(rows) {
+  if (!rows.length) return { inserted: 0, skipped: 0 };
+
+  const policies = await slaPolicies().find().toArray();
+  const minutesFor = Object.fromEntries(policies.map(p => [p.priority, p.resolveMinutes]));
+
+  const docs = rows.map(r => {
+    const slaMinutes = minutesFor[r.priority];
+    const slaDueAt = new Date(r.createdAt.getTime() + slaMinutes * 60000);
+    const breached = r.resolvedAt > slaDueAt;
+    return {
+      incidentId: r.incidentId,
+      title: r.title,
+      description: "Imported from historical ticket export",
+      priority: r.priority,
+      team: r.team,
+      status: "RESOLVED",
+      slaMinutes,
+      slaDueAt,
+      slaWarned: false,
+      slaBreached: breached,
+      escalated: breached && ["P1", "P2"].includes(r.priority),
+      createdAt: r.createdAt,
+      updatedAt: r.resolvedAt,
+      resolvedAt: r.resolvedAt,
+      history: [{ status: "OPEN", at: r.createdAt }, { status: "RESOLVED", at: r.resolvedAt }],
+      source: "csv-import"
+    };
+  });
+
+  try {
+    const result = await incidents().insertMany(docs, { ordered: false });
+    return { inserted: result.insertedCount, skipped: 0 };
+  } catch (err) {
+    // Duplicate keys (re-running the import) are skipped, not treated as failures
+    if (err.code === 11000 || err.writeErrors) {
+      const inserted = err.insertedCount ?? err.result?.insertedCount ?? 0;
+      return { inserted, skipped: docs.length - inserted };
+    }
+    throw err;
+  }
+}
+
+module.exports = {
+  validateNew, create, findAll, findById, findOpen, updateStatus,
+  findBreachCandidates, findWarningCandidates, markBreached, markWarned, markEscalated,
+  insertHistorical, PRIORITIES, TEAMS, STATUSES
+};

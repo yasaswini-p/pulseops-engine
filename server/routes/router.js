@@ -1,15 +1,17 @@
 // ROUTER — maps HTTP method + URL pattern to a controller function
 const incidents = require("../controllers/incidentController");
 const system = require("../controllers/systemController");
+const importer = require("../controllers/importController");
 const { sendJson } = require("../utils/http");
 
 const routes = [
-  { method: "GET",   pattern: /^\/$/,                                handler: system.dashboard },
-  { method: "GET",   pattern: /^\/api\/health$/,                     handler: system.health },
-  { method: "GET",   pattern: /^\/api\/incidents$/,                  handler: incidents.list },
-  { method: "POST",  pattern: /^\/api\/incidents$/,                  handler: incidents.create },
-  { method: "GET",   pattern: /^\/api\/incidents\/(INC-\d+)$/,        handler: incidents.getOne },
-  { method: "PATCH", pattern: /^\/api\/incidents\/(INC-\d+)\/status$/, handler: incidents.updateStatus }
+  { method: "GET",   pattern: /^\/$/,                                  handler: system.dashboard },
+  { method: "GET",   pattern: /^\/api\/health$/,                       handler: system.health },
+  { method: "GET",   pattern: /^\/api\/incidents$/,                    handler: incidents.list },
+  { method: "POST",  pattern: /^\/api\/incidents$/,                    handler: incidents.create },
+  { method: "GET",   pattern: /^\/api\/incidents\/(INC-\d+)$/,          handler: incidents.getOne },
+  { method: "PATCH", pattern: /^\/api\/incidents\/(INC-\d+)\/status$/,   handler: incidents.updateStatus },
+  { method: "POST",  pattern: /^\/api\/import$/,                       handler: importer.importHistorical }
 ];
 
 async function handle(req, res) {
