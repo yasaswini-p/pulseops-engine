@@ -1,0 +1,12 @@
+PulseOps access-control test — Fri Nov 20 17:12:05 IST 2026
+-------------------------------------------------------------------------
+1. No login reads incidents        (expect DENIED)      → DENIED (Unauthorized)
+2. Analyst reads teams             (expect ALLOWED)     → ALLOWED
+3. Analyst inserts incident        (expect DENIED)      → DENIED (Unauthorized)
+4. Auditor reads audit logs        (expect ALLOWED)     → ALLOWED
+5. Auditor reads incidents         (expect DENIED)      → DENIED (Unauthorized)
+6. App inserts incident            (expect ALLOWED)     → ALLOWED
+7. App deletes incident            (expect DENIED)      → DENIED (Unauthorized)
+8. App drops incidents collection  (expect DENIED)      → DENIED (Unauthorized)
+9. Admin cleans up test incident   (expect ALLOWED)     → ALLOWED
+-------------------------------------------------------------------------
