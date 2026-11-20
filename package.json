@@ -10,7 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --env-file=.env server/server.js",
     "dev": "node --watch --env-file=.env server/server.js",
-    "generate-data": "node scripts/generate-sample-data.js"
+    "generate-data": "node scripts/generate-sample-data.js",
+    "report": "node --env-file=.env analytics/slaReport.js"
   },
   "keywords": [],
   "author": "",
