@@ -209,12 +209,9 @@ curl -X POST localhost:3000/api/incidents -H "Content-Type: application/json" \
 
 ---
 
-## Roadmap: PulseOps Console (Part 2)
+## Part 2: PulseOps Console
 
-- Express REST API layer reusing this data model
-- React dashboard for managers (SLA health, trends, team performance)
-- Angular admin console for assigning and resolving incidents
-- Role-based login mapped to the database roles defined here
+The management interface for this engine is available at **[pulseops-console](https://github.com/yasaswini-p/pulseops-console)**: an Express REST API, a React manager dashboard and an Angular operator console that work on the same database.
 
 ---
 
